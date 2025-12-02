@@ -1,0 +1,10 @@
+artifact_location: file:///home/runner/work/credit-scoring-project/credit-scoring-project/mlruns/0/models/m-4a85a2bfc75b4a7993bfb19b27d95dac/artifacts
+creation_timestamp: 1764691128214
+experiment_id: '0'
+last_updated_timestamp: 1764691130636
+model_id: m-4a85a2bfc75b4a7993bfb19b27d95dac
+model_type: null
+name: model
+source_run_id: fbadaa81fcc042b7b649698059f7ec35
+status: 2
+status_message: null
