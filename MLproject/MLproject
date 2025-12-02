@@ -5,7 +5,7 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-      n_estimators: {type: int, default: 50}   <-- Cukup 50 pohon
-      max_depth: {type: int, default: 10}       <-- Kedalaman 10 saja
+      n_estimators: {type: int, default: 50}
+      max_depth: {type: int, default: 10}
       dataset: {type: string, default: "train_pca.csv"}
     command: "python modelling.py {n_estimators} {max_depth} {dataset}"
