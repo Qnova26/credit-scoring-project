@@ -59,13 +59,14 @@ jobs:
 
       - name: Upload to Google Drive
         env:
-          # Mengambil rahasia yang sudah kita set di GitHub
           GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }} 
-          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
-          # Jalankan script upload yang baru kita buat
+          # 1. KOMPRES FOLDER (INI YANG KEMARIN KURANG)
+          # Perintah ini akan membungkus folder 'mlruns' menjadi file 'mlruns_backup.zip'
+          zip -r mlruns_backup.zip mlruns/
+          
+          # 2. Jalankan script upload
           python MLproject/upload_to_gdrive.py
-
 
 
       # --- SAVE HASIL (Support File Besar) ---
