@@ -9,7 +9,6 @@ on:
       - main
 
 env:
-  # Pastikan path ini benar menunjuk ke file CSV di dalam folder MLproject
   CSV_URL: "MLproject/train_pca.csv"
 
 jobs:
@@ -17,46 +16,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Ambil kode dari repo
       - uses: actions/checkout@v3
 
-      # 2. Siapkan Python
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
       
-      # 3. Cek Environment (Debugging)
-      - name: Check Env
-        run: |
-          echo "Lokasi CSV: $CSV_URL"
-          ls -R
-
-      # 4. Install MLflow dan library pendukung
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install mlflow pandas scikit-learn numpy
 
-      # 5. Jalankan Training
-      # Perintah ini akan menjalankan project yang ada di folder 'MLproject'
+      # Jalankan Training (Nanti akan menghasilkan model besar)
       - name: Run mlflow project
         run: |
           mlflow run MLproject --env-manager=local 
 
-      # 6. SIMPAN HASIL (Commit & Push balik ke GitHub)
-      - name: Save mlruns to repo
+      # --- SIDE QUEST: SETUP GIT LFS ---
+      - name: Set up Git LFS
         run: |
-          # Mengambil identitas dari Secrets yang Anda buat tadi
+          # Konfigurasi User
           git config --global user.name ${{ secrets.username }}
           git config --global user.email ${{ secrets.email }}
           
-          # Menambahkan folder hasil training (mlruns)
-          git add mlruns/
+          # Install & Setup LFS
+          git lfs install
+          # Lacak semua file di dalam folder mlruns
+          git lfs track "mlruns/**"
+          git add .gitattributes
           
-          # Commit perubahan (jika ada file baru)
-          # "|| echo..." agar tidak error jika tidak ada perubahan
-          git commit -m "Save mlruns from CI run" || echo "No changes to commit"
+          # Commit file .gitattributes (agar GitHub tahu kita pakai LFS)
+          git commit -m "Track large files in mlruns with Git LFS" || true
+          git push origin main
           
-          # Push ke branch MAIN
+      # --- SAVE HASIL (Support File Besar) ---
+      - name: Save mlruns to repo
+        run: |
+          git config --global user.name ${{ secrets.username }}
+          git config --global user.email ${{ secrets.email }}
+          
+          # Paksa add folder mlruns
+          git add -f mlruns/
+          git commit -m "Save mlruns (Large Model) from CI run" || true
           git push origin main
