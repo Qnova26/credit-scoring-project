@@ -49,7 +49,25 @@ jobs:
           # Commit file .gitattributes (agar GitHub tahu kita pakai LFS)
           git commit -m "Track large files in mlruns with Git LFS" || true
           git push origin main
-          
+      
+
+      # --- METODE BARU: UPLOAD KE GOOGLE DRIVE ---
+      
+      - name: Install Python dependencies for Drive
+        run: |
+          pip install --upgrade google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+
+      - name: Upload to Google Drive
+        env:
+          # Mengambil rahasia yang sudah kita set di GitHub
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }} 
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          # Jalankan script upload yang baru kita buat
+          python MLproject/upload_to_gdrive.py
+
+
+
       # --- SAVE HASIL (Support File Besar) ---
       - name: Save mlruns to repo
         run: |
