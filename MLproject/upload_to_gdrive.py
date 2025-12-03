@@ -1,35 +1,54 @@
 import os
 import json
-import shutil
+import sys
+from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-from datetime import datetime
+from googleapiclient.errors import HttpError  # <--- Ini yang tadi hilang
+
+# --- KONFIGURASI KREDENSIAL ---
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+
+# Ambil kredensial dari Environment Variable (yang diset di GitHub Secrets)
+credentials_json = os.environ.get('GDRIVE_CREDENTIALS')
+
+# Cek apakah kredensial ada
+if not credentials_json:
+    print("Error: Secret 'GDRIVE_CREDENTIALS' tidak ditemukan.")
+    # Kita biarkan exit agar ketahuan kalau error
+    sys.exit(1)
+
+# Parsing JSON ke variabel dictionary
+SERVICE_ACCOUNT_INFO = json.loads(credentials_json)
 
 def upload_to_drive():
     try:
-        # Authenticate
+        # --- 1. OTENTIKASI ---
         creds = service_account.Credentials.from_service_account_info(
             SERVICE_ACCOUNT_INFO, scopes=SCOPES)
         service = build('drive', 'v3', credentials=creds)
 
-        # Nama file ZIP yang mau diupload
-        file_name = f"mlruns_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.zip"
-        
-        # --- PERBAIKAN DI SINI ---
-        # Masukkan ID Folder yang tadi Anda copy dari URL
+        # Nama file saat disimpan di Drive
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        file_name = f"mlruns_backup_{timestamp}.zip"
+
+        # --- 2. ID FOLDER (PENTING!) ---
+        # Ganti dengan ID Folder Google Drive Anda
         FOLDER_ID = '1QJ_2pu2w1eDeGoDIgcs-t2nhXh9nDsDF' 
         
+        # Metadata file (Nama & Lokasi Folder)
         file_metadata = {
             'name': file_name,
-            'parents': [FOLDER_ID]  # <-- Ini kuncinya! Kita masukkan ke dalam folder
+            'parents': [FOLDER_ID] 
         }
-        # -------------------------
 
-        # ... (sisa kode ke bawah sama)
+        # --- 3. PROSES UPLOAD ---
+        # File lokal yang mau diupload
         media = MediaFileUpload('mlruns_backup.zip', mimetype='application/zip')
 
-        print(f"Mengupload {file_name} ke Google Drive...")
+        print(f"Sedang mengupload {file_name} ke Google Drive...")
+        
         file = service.files().create(
             body=file_metadata,
             media_body=media,
@@ -39,10 +58,8 @@ def upload_to_drive():
         print(f"Sukses! File ID: {file.get('id')}")
 
     except HttpError as error:
-        print(f'An error occurred: {error}')
-        # Biarkan script tetap sukses (exit 0) meski gagal upload,
-        # agar pipeline tidak merah total (Opsional)
-        # sys.exit(1) 
+        print(f'Terjadi error saat upload ke GDrive: {error}')
+        # Opsional: sys.exit(1) jika ingin workflow jadi Merah (Gagal) saat upload gagal
 
 if __name__ == '__main__':
     upload_to_drive()
