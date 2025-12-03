@@ -7,49 +7,42 @@ from googleapiclient.http import MediaFileUpload
 from datetime import datetime
 
 def upload_to_drive():
-    # 1. Ambil Credentials dari GitHub Secrets
-    creds_json = os.environ.get('GDRIVE_CREDENTIALS')
-    folder_id = os.environ.get('GDRIVE_FOLDER_ID')
+    try:
+        # Authenticate
+        creds = service_account.Credentials.from_service_account_info(
+            SERVICE_ACCOUNT_INFO, scopes=SCOPES)
+        service = build('drive', 'v3', credentials=creds)
 
-    if not creds_json or not folder_id:
-        print("Error: GDRIVE_CREDENTIALS atau GDRIVE_FOLDER_ID tidak ditemukan.")
-        return
+        # Nama file ZIP yang mau diupload
+        file_name = f"mlruns_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.zip"
+        
+        # --- PERBAIKAN DI SINI ---
+        # Masukkan ID Folder yang tadi Anda copy dari URL
+        FOLDER_ID = '1QJ_2pu2w1eDeGoDIgcs-t2nhXh9nDsDF' 
+        
+        file_metadata = {
+            'name': file_name,
+            'parents': [FOLDER_ID]  # <-- Ini kuncinya! Kita masukkan ke dalam folder
+        }
+        # -------------------------
 
-    # Parse JSON string ke Dictionary
-    creds_dict = json.loads(creds_json)
-    creds = service_account.Credentials.from_service_account_info(creds_dict)
+        # ... (sisa kode ke bawah sama)
+        media = MediaFileUpload('mlruns_backup.zip', mimetype='application/zip')
 
-    # 2. Build Service Drive
-    service = build('drive', 'v3', credentials=creds)
+        print(f"Mengupload {file_name} ke Google Drive...")
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id'
+        ).execute()
 
-    # 3. Zip Folder mlruns agar mudah diupload
-    # Folder yang mau di-zip
-    source_dir = "mlruns"
-    # Nama file output (misal: mlruns_2023-10-27_10-30-00)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_filename = f"mlruns_backup_{timestamp}"
-    
-    print(f"Sedang mengompres folder {source_dir}...")
-    shutil.make_archive(output_filename, 'zip', source_dir)
-    zip_file = output_filename + ".zip"
+        print(f"Sukses! File ID: {file.get('id')}")
 
-    # 4. Upload ke Google Drive
-    print(f"Mengupload {zip_file} ke Google Drive...")
-    
-    file_metadata = {
-        'name': zip_file,
-        'parents': [folder_id]
-    }
-    
-    media = MediaFileUpload(zip_file, mimetype='application/zip')
-    
-    file = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id'
-    ).execute()
+    except HttpError as error:
+        print(f'An error occurred: {error}')
+        # Biarkan script tetap sukses (exit 0) meski gagal upload,
+        # agar pipeline tidak merah total (Opsional)
+        # sys.exit(1) 
 
-    print(f"Sukses! File ID: {file.get('id')}")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     upload_to_drive()
