@@ -35,7 +35,7 @@ def upload_to_drive():
 
         # --- 2. ID FOLDER (PENTING!) ---
         # Ganti dengan ID Folder Google Drive Anda
-        FOLDER_ID = '0AOIJ3a7U2uOHUk9PVA?hl=id' 
+        FOLDER_ID = '0AOIJ3a7U2uOHUk9PVA' 
         
         # Metadata file (Nama & Lokasi Folder)
         file_metadata = {
